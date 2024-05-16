@@ -1,0 +1,51 @@
+Sub ZnajdzDuplikatyIZlicz()
+    Dim SrcRange As Range
+    Dim DestSheet As Worksheet
+    Dim DestRange As Range
+    Dim Cell As Range
+    Dim Duplicate As Boolean
+    Dim DupDict As Object
+    
+    ' Wybierz zakres za pomocą okna dialogowego
+    On Error Resume Next
+    Set SrcRange = Application.InputBox("Wybierz zakres, w którym chcesz znaleźć duplikaty:", Type:=8)
+    On Error GoTo 0
+    
+    ' Sprawdź, czy użytkownik anulował wybór
+    If SrcRange Is Nothing Then
+        MsgBox "Anulowano operację."
+        Exit Sub
+    End If
+    
+    ' Utwórz nowy arkusz
+    Set DestSheet = ThisWorkbook.Sheets.Add
+    DestSheet.Name = "Duplikaty"
+    
+    ' Ustal zakres docelowy na nowym arkuszu
+    Set DestRange = DestSheet.Range("A1")
+    
+    ' Inicjalizuj słownik do śledzenia duplikatów
+    Set DupDict = CreateObject("Scripting.Dictionary")
+    
+    ' Przeszukaj każdą komórkę w zakresie źródłowym
+    For Each Cell In SrcRange
+        Duplicate = False
+        
+        ' Sprawdź, czy wartość komórki jest duplikatem
+        If Application.WorksheetFunction.CountIf(SrcRange, Cell.Value) > 1 Then
+            Duplicate = True
+            If Not DupDict.Exists(Cell.Value) Then
+                DupDict(Cell.Value) = 1
+            Else
+                DupDict(Cell.Value) = DupDict(Cell.Value) + 1
+            End If
+        End If
+        
+        ' Jeśli to jest duplikat, wypisz go w zakresie docelowym z liczbą wystąpień
+        If Duplicate And DupDict(Cell.Value) = 1 Then
+            DestRange.Value = Cell.Value
+            DestRange.Offset(0, 1).Value = DupDict(Cell.Value)
+            Set DestRange = DestRange.Offset(1, 0)
+        End If
+    Next Cell
+End Sub
